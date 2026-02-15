@@ -1,2 +1,4 @@
 # chatbotbackend
-FastApi server to handle backend tasks for my chatbot
+Talk to Multiple PDFS
+Frontend: Streamlit
+Parsing documents through Langchain
