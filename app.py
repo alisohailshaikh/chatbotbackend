@@ -1,6 +1,8 @@
 #main page to get find multi model pdf embeddings project
 import streamlit as st
 from dotenv import load_dotenv
+from pdf_utils import get_pdf_text, get_text_chunks, get_vectorstore
+
 
 def main():
     load_dotenv()
@@ -11,8 +13,18 @@ def main():
     
     with st.sidebar:
         st.subheader("Your PDF Documents")
-        st.file_uploader("Upload your PDF files here: ")
-        st.button("Upload")
+        pdf_docs = st.file_uploader("Upload your PDF files here: ", accept_multiple_files=True)
+        if st.button("Upload"):
+            with st.spinner("Processing"):
+                #get pdf text 
+                raw_text = get_pdf_text(pdf_docs)
 
-if __name__ == "__main__":
+                #get the text chunks
+                text_chunks = get_text_chunks(raw_text)
+                
+                #create vector store
+                vectorstore = get_vectorstore(text_chunks)
+
+
+if __name__ == "__main__": 
     main()
