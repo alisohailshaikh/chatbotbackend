@@ -1,4 +1,4 @@
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
