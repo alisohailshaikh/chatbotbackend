@@ -4,6 +4,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
+
 from retrieve_documents import retrieve_documents 
 import os
 
@@ -17,9 +18,7 @@ def get_conversation_chain():
     def get_context(input_dict):
         query = input_dict["input"]
         docs = retrieve_documents(query, USER_ID)
-        if docs:
-            return "\n".join(docs)
-        return None
+        return "\n".join(docs)
 
     prompt = ChatPromptTemplate.from_template("""
     Answer the question based only on the context below.

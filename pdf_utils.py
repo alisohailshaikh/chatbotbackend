@@ -1,7 +1,11 @@
+import os
+
 from pypdf import PdfReader
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import FAISS
+from langchain_community.vectorstores import SupabaseVectorStore
+from supabase import create_client
+from dotenv import load_dotenv
 
 
 
@@ -29,9 +33,27 @@ def get_text_chunks(raw_text):
         print("Text chunks created successfully")
     return chunks
 
+
 def get_vectorstore(text_chunks):
+    url = os.getenv("SUPABASE_URL")
+    key = os.getenv("SUPABASE_KEY")
+    supabase = create_client(url, key)
+    USER_ID = os.getenv("TESTDB_USER_ID")
+
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-    vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
-    if (vectorstore):
+
+    vectors = embeddings.embed_documents(text_chunks)
+    data = []
+    for i in range(len(vectors)):
+        data.append({
+            "content": text_chunks[i],
+            "embedding": vectors[i],
+            "user_id": USER_ID,
+            "metadata": {}
+        })
+    
+    supabase.table("documents").insert(data).execute()
+
+    if (supabase):
         print("Vectorstore created successfully")
-    return vectorstore
+    return supabase
