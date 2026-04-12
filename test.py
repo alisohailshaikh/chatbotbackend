@@ -1,59 +1,109 @@
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough, RunnableLambda
-from langchain_core.chat_history import InMemoryChatMessageHistory
-from langchain_core.runnables.history import RunnableWithMessageHistory
+# #main page to get find multi model pdf embeddings project
+# from tabnanny import check
 
-from retrieve_documents import retrieve_documents 
-import os
+# import streamlit as st
+# from dotenv import load_dotenv
+# load_dotenv()
+# from pdf_utils import get_pdf_text, get_text_chunks, get_vectorstore
+# from conversation_chain import get_conversation_chain
+# from check_for_documents import has_documents_for_user
+# from auth import sign_up, sign_in, sign_out
 
 
-def get_conversation_chain():
+# def main():
+#     if "user" not in st.session_state:
+#         st.session_state.user = None
+#         if st.session_state.user is None:
 
-    llm = ChatOpenAI(model="gpt-4o-mini")
+#             st.title("Login / Sign Up")
 
-    USER_ID = os.getenv("TESTDB_USER_ID")
+#             auth_mode = st.radio("Choose mode", ["Login", "Sign Up"])
 
-    def get_context(input_dict):
-        query = input_dict["input"]
-        docs = retrieve_documents(query, USER_ID)
-        return "\n".join(docs)
+#             email = st.text_input("Email")
+#             password = st.text_input("Password", type="password")
 
-    prompt = ChatPromptTemplate.from_template("""
-    Answer the question based only on the context below.
+#             if st.button("Submit"):
+#                 if auth_mode == "Sign Up":
+#                     res = sign_up(email, password)
+#                 else:
+#                     res = sign_in(email, password)
 
-    Context:
-    {context}
+#                 if res.user:
+#                     st.session_state.user = res.user
+#                     st.success("Logged in successfully")
+#                     st.rerun()
+#                 else:
+#                     st.error("Authentication failed")
 
-    Chat History:
-    {chat_history}
+#             return
+#     if st.button("Logout"):
+#         sign_out()
+#         st.session_state.user = None
+#         st.rerun()
+#     st.set_page_config(page_title="Chat with Multiple PDFS", page_icon=":soccer:", layout="wide")
+#     #main header of the page
+#     st.header("Chat with Multiple PDFS :soccer:")  
 
-    Question:
-    {input}
-    """)
+#     if "conversation" not in st.session_state:
+#         st.session_state.conversation = None
 
-    chain = (
-        {
-            "context": RunnableLambda(get_context),
-            "input": lambda x: x["input"],
-            "chat_history": lambda x: x["chat_history"],
-        }
-        | prompt
-        | llm
-        | StrOutputParser()
-    )
+#     if "chat_history" not in st.session_state:
+#         st.session_state.chat_history = []
+    
+#     conversation  = None
+#     pdf_docs = None
+#     with st.sidebar:
+#         if st.session_state.user and st.session_state.user.id:
+#             existing_pdf = has_documents_for_user(st.session_state.user.id)  #check if current already has vectors embedded
+#         else:
+#             existing_pdf = False
+#         if existing_pdf:
+#             st.subheader("Existing PDF Documents")
+#             st.write("You have already uploaded PDF documents. You can start asking questions about them.")
+#             conversation = get_conversation_chain()
+#         else:
+#             st.subheader("Your PDF Documents")
+#             pdf_docs = st.file_uploader("Upload your PDF files here: ", accept_multiple_files=True)
+#             if st.button("Upload"):
+#                 if not pdf_docs:
+#                     st.warning("Please upload at least one PDF.")
+#                     return
+                
+#                 with st.spinner("Processing"):
+#                     #get pdf text 
+#                     raw_text = get_pdf_text(pdf_docs)
 
-    store = {}
+#                     #get the text chunks
+#                     text_chunks = get_text_chunks(raw_text)
+                    
+#                     #create vector store
+#                     vectorstore = get_vectorstore(text_chunks, st.session_state.user)
 
-    def get_session_history(session_id: str):
-        if session_id not in store:
-            store[session_id] = InMemoryChatMessageHistory()
-        return store[session_id]
+#                     #create conversation chain
+#                     st.session_state.conversation = get_conversation_chain()
+#                     conversation = st.session_state.conversation
 
-    return RunnableWithMessageHistory(
-        chain,
-        get_session_history,
-        input_messages_key="input",
-        history_messages_key="chat_history",
-    )
+#     #CHAT INPUT
+#     # Only show the input box if the user has uploaded PDFs or has documents in the DB
+#     if pdf_docs or has_documents_for_user(st.session_state.user.id):
+#         user_question = st.chat_input("Ask a question about your documents")
+#     else:
+#         st.info("You cannot ask questions until you upload PDFs.")
+#         user_question = None
+   
+#     if user_question and conversation:
+#         response = conversation.invoke(
+#             {"input": user_question},
+#             config={"configurable": {"session_id": "streamlit_user"}}
+#         )
+
+#         st.session_state.chat_history.append(("user", user_question))
+#         st.session_state.chat_history.append(("assistant", response))
+    
+#     #Display chat hsitory
+#     for role, message in st.session_state.chat_history:
+#         with st.chat_message(role):
+#             st.write(message)
+
+# if __name__ == "__main__": 
+#     main()

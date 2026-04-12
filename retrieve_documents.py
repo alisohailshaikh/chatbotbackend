@@ -2,7 +2,7 @@ from langchain_openai import OpenAIEmbeddings
 from supabase import create_client
 import os
 
-def retrieve_documents(query, user_id):
+def retrieve_documents(query, user_id, document_id):
 
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_KEY")
@@ -20,7 +20,8 @@ def retrieve_documents(query, user_id):
         {
             "query_embedding": query_embedding,
             "match_count": 5,
-            "filter_user_id": user_id
+            "filter_user_id": user_id,
+            "filter_document_id": document_id
         }
     ).execute()
 

@@ -1,24 +1,22 @@
 import os
-
 from pypdf import PdfReader
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import SupabaseVectorStore
 from supabase import create_client
-from dotenv import load_dotenv
+import uuid
 
 
-
-def get_pdf_text(pdf_docs):
+def get_pdf_text(pdf_doc):
     print("Extracting text from PDF documents...")
     text = ""
-    for pdf in pdf_docs:
-        pdf_reader = PdfReader(pdf)
-        for page in pdf_reader.pages:
-            text += page.extract_text()
+    file_name = pdf_doc.name
+    pdf_reader = PdfReader(pdf_doc)
+    for page in pdf_reader.pages:
+        text += page.extract_text()
     if (len(text) > 0):
         print("Text extracted successfully")
-    return text 
+    return text, file_name 
 
 def get_text_chunks(raw_text):
     text_spiltter = CharacterTextSplitter(
@@ -34,14 +32,14 @@ def get_text_chunks(raw_text):
     return chunks
 
 
-def get_vectorstore(text_chunks):
+def get_vectorstore(text_chunks, user_id, file_name):
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_KEY")
     supabase = create_client(url, key)
-    USER_ID = os.getenv("TESTDB_USER_ID")
+    USER_ID = user_id
 
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-
+    document_id = str(uuid.uuid4())
     vectors = embeddings.embed_documents(text_chunks)
     data = []
     for i in range(len(vectors)):
@@ -49,11 +47,13 @@ def get_vectorstore(text_chunks):
             "content": text_chunks[i],
             "embedding": vectors[i],
             "user_id": USER_ID,
-            "metadata": {}
+            "metadata": {},
+            "document_id": document_id,
+            "file_name": file_name
         })
     
     supabase.table("documents").insert(data).execute()
 
     if (supabase):
         print("Vectorstore created successfully")
-    return supabase
+    return document_id

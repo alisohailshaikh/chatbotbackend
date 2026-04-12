@@ -1,21 +1,20 @@
 from supabase import create_client
 import os
 
-def has_documents_for_user() -> bool:
+def has_documents_for_user(user_id) -> bool:
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_KEY") 
-    user_id = os.getenv("TESTDB_USER_ID")
     supabase = create_client(url, key)
     
     result = (
         supabase
         .table("documents")
-        .select("id")
+        .select("document_id", "file_name")  # Only select the document_id
         .eq("user_id", user_id)  # Filter by user
         .limit(1)                # Only need one document
         .execute()
     )
 
     if result.data and len(result.data) > 0:
-        return True
-    return False
+        return result.data
+    return None

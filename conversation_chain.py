@@ -8,19 +8,19 @@ from retrieve_documents import retrieve_documents
 import os
 
 
-def get_conversation_chain():
+def get_conversation_chain(user_id, document_id):
 
     llm = ChatOpenAI(model="gpt-4o-mini")
 
-    USER_ID = os.getenv("TESTDB_USER_ID")
+    USER_ID = user_id
 
     def get_context(input_dict):
         query = input_dict["input"]
-        docs = retrieve_documents(query, USER_ID)
+        docs = retrieve_documents(query, USER_ID, document_id)
         if docs:
             return "\n".join(docs)
         return None
-
+    
     prompt = ChatPromptTemplate.from_template("""
     Answer the question based only on the context below.
 
